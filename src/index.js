@@ -41,13 +41,14 @@ function makeCard(data) {
     newDiv.append(newImg)
 
     const newP = document.createElement('p')
+    newP.likes = data[i].likes
     newP.textContent = `${data[i].likes} Likes`
     newDiv.append(newP)
 
     const newButton = document.createElement('button')
     newButton.className = 'like-btn'
     newButton.id = data[i].id
-    newButton.textContent = 'Like'
+    newButton.textContent = 'Like ❤️'
     newDiv.append(newButton)
 
     collectionDiv.append(newDiv)
@@ -55,8 +56,7 @@ function makeCard(data) {
 }
 
 // When a user submits the form a new toy is added to the database
-
-const form = document.getElementsByClassName('add-toy-form')
+const form = document.querySelector('.add-toy-form')
 form.addEventListener('submit',addNewToy)
 
 function addNewToy() {
@@ -68,9 +68,59 @@ function addNewToy() {
       Accept: "application/json"
     },
     body: JSON.stringify({
-      'name': this.name,
-      'image': this.value,
+      'name': this.name.value,
+      'image': this.image.value,
       'likes':0
     })
   })
+}
+
+
+// When the like button is clicked, increase the number of likes in the database
+setTimeout(() => {
+  executeLikes()
+}, 3000);
+
+function executeLikes() {
+  const likeButtons = document.querySelectorAll('.like-btn')
+  likeButtons.forEach(button => button.addEventListener('click', addLikes))
+}
+
+function addLikes(event) {
+  event.preventDefault()
+  const id = this.id
+
+  // Get current number of likes
+  fetch(`http://localhost:3000/toys/${id}`)
+    .then(response => response.json())
+    .then(data => processLikes(data))
+
+  function processLikes(data) {
+    let numberOfLikes = parseInt(data.likes)
+    numberOfLikes++
+
+    // Update number of likes
+    fetch(`http://localhost:3000/toys/${id}`, {
+      method: 'PATCH',
+      headers:
+      {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        'likes': numberOfLikes
+      })
+    })
+      .then(response=>response.json())
+      .then(data=>updateLikes(data))
+  }
+
+  function updateLikes(data) {
+    const id = data.id
+    const numbLikes = data.likes
+    const likesP = document.getElementById(id).previousSibling
+    likesP.textContent = `${numbLikes} Likes`
+  }
+
+  
 }
